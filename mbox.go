@@ -15,9 +15,12 @@
 package mbox
 
 import (
+	"compress/gzip"
 	"errors"
 	"fmt"
+	"io"
 	"os"
+	"strings"
 
 	"github.com/galdor/go-stream"
 )
@@ -53,11 +56,19 @@ func Open(path string, format Format) (*Mbox, error) {
 		return nil, err
 	}
 
+	var reader io.Reader = file
+	if strings.HasSuffix(path, ".gz") {
+		reader, err = gzip.NewReader(reader)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	mbox := &Mbox{
 		Format: format,
 
 		file:   file,
-		stream: stream.NewStream(file),
+		stream: stream.NewStream(reader),
 	}
 
 	return mbox, nil
